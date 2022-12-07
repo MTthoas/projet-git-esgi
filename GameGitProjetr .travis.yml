@@ -1,0 +1,55 @@
+# .travis.yml using container-based infrastructure
+
+# use c as catch-all language
+language: c
+
+# use containers
+sudo: false
+
+branches:
+  only:
+   - main
+
+# install R: use r-packages-precise (https://cran.r-project.org/bin/linux/ubuntu/precise/) 
+# as source which is white listed (https://github.com/travis-ci/apt-source-whitelist/)
+addons:
+  apt:
+    sources:
+    - r-packages-precise
+    packages:
+    - r-base-dev	
+    - r-recommended
+    - pandoc
+
+# cache local R libraries directory:
+cache:
+  directories:
+    - ~/Rlib
+
+# install the package and dependencies:
+# - create directory for R libraries (if not already exists)
+# - create .Renviron with location of R libraries
+# - define R repository in .Rprofile
+# - add .travis.yml to .Rbuildignore
+# - install devtools if not already installed
+# - install covr if not already installed
+# - update all installed packages
+# - install package with dependencies
+install:
+
+
+# Build and check package
+script:
+  - cmake ..
+  - make ./gitProjet
+  - R CMD check "${PKG_FILE_NAME}" --no-build-vignettes --no-manual --as-cran 
+
+# report coverage rate to coveralls
+after_success:
+  - Rscript -e 'covr::coveralls(exclusions = "src/RcppExports.cpp")'
+
+# send e-mails if stuff changes
+notifications:
+  email:
+    on_success: change
+    on_failure: change
